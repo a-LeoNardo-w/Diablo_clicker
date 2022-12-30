@@ -4,6 +4,8 @@ import sys
 import random
 import time
 
+
+#feature
 pygame.init()
 size = width, height = 1024, 1000
 screen = pygame.display.set_mode(size)
