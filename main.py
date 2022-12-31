@@ -4,8 +4,6 @@ import sys
 import random
 import time
 
-
-#head
 pygame.init()
 size = width, height = 1024, 1000
 screen = pygame.display.set_mode(size)
@@ -22,8 +20,9 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():
-    global monstr, monstr_exist_flag
+    global monstr, monstr_exist_flag, hpbar
     monstr = monstr()
+    hpbar = healthBar()
     monstr_exist_flag = True
 
 
@@ -96,8 +95,10 @@ class monstr(pygame.sprite.Sprite):
             mouse.image = load_image('mouse_cursor.png')
             mouse.image = pygame.transform.scale(mouse.image, (60, 60))
 
-    def getHit(self, event):
-        if pygame.sprite.collide_mask(self, mouse) and event.type == pygame.MOUSEBUTTONDOWN and self.monstr_already_move and pygame.mouse.get_pressed(3)[0]:
+    def take_damage(self, event):
+        if pygame.sprite.collide_mask(self,
+                                      mouse) and event.type == pygame.MOUSEBUTTONDOWN and self.monstr_already_move and \
+                pygame.mouse.get_pressed(3)[0]:
             self.rect.x += 5
             self.rect.y += 5
             self.helthPoint -= 2
@@ -112,6 +113,30 @@ class monstr(pygame.sprite.Sprite):
             self.rect.x -= 5
             self.rect.y -= 5
             self.monstr_already_move = True
+
+    def get_max_health(self):
+        return self.oldHelthPoint
+
+    def get_current_health(self):
+        return self.helthPoint
+
+    def get_xy(self):
+        return (self.rect.x, self.rect.y)
+
+
+class healthBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(healthBar_sprite)
+        self.image = pygame.Surface((0, 0))
+        self.image.fill((255, 0, 0))
+        self.rect = self.image.get_rect(center=(400, 400))
+        pygame.draw.rect(screen, (255, 255, 255), (10, 30, 400, 30))
+
+    def update(self):
+        pygame.draw.rect(screen, (255, 255, 255), (260, 90, 400, 30))
+        pygame.draw.rect(screen, (255, 0, 0), (260, 90, monstr.get_current_health()/(monstr.get_max_health()/400), 30))
+        font = pygame.font.Font(None, 36)
+        text = font.render(monstr)
 
 
 class inventary(pygame.sprite.Sprite):
@@ -159,6 +184,7 @@ clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 mouse_sprites = pygame.sprite.Group()
 monstr_sprites = pygame.sprite.Group()
+healthBar_sprite = pygame.sprite.Group()
 menu = menu(0, 0, 0, (0, 0))
 mouse = mouse((0, 0))
 
@@ -173,13 +199,16 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pressed(3)[0] == False:
             mouse.click = False
         if monstr_exist_flag:
-            monstr.getHit(event)
+            monstr.take_damage(event)
+
     all_sprites.update()
     all_sprites.draw(screen)
     monstr_sprites.update()
     monstr_sprites.draw(screen)
     mouse_sprites.update()
     mouse_sprites.draw(screen)
+    healthBar_sprite.update()
+    healthBar_sprite.draw(screen)
     pygame.display.flip()
     pygame.display.update()
     clock.tick(fps)
