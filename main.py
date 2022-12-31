@@ -135,8 +135,6 @@ class healthBar(pygame.sprite.Sprite):
     def update(self):
         pygame.draw.rect(screen, (255, 255, 255), (260, 90, 400, 30))
         pygame.draw.rect(screen, (255, 0, 0), (260, 90, monstr.get_current_health()/(monstr.get_max_health()/400), 30))
-        font = pygame.font.Font(None, 36)
-        text = font.render(monstr)
 
 
 class inventary(pygame.sprite.Sprite):
