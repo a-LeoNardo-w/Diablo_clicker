@@ -108,7 +108,6 @@ class monstr(pygame.sprite.Sprite):
                 self.experience += 10
                 self.image = random.choice(self.monstres)
             self.monstr_already_move = False
-            print(self.helthPoint)
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False:
             self.rect.x -= 5
             self.rect.y -= 5
@@ -130,11 +129,14 @@ class healthBar(pygame.sprite.Sprite):
         self.image = pygame.Surface((0, 0))
         self.image.fill((255, 0, 0))
         self.rect = self.image.get_rect(center=(400, 400))
-        pygame.draw.rect(screen, (255, 255, 255), (10, 30, 400, 30))
 
     def update(self):
-        pygame.draw.rect(screen, (255, 255, 255), (260, 90, 400, 30))
+        pygame.draw.rect(screen, (100, 100, 100), (260, 90, 400, 30))
         pygame.draw.rect(screen, (255, 0, 0), (260, 90, monstr.get_current_health()/(monstr.get_max_health()/400), 30))
+        f1 = pygame.font.Font(None, 36)
+        text1 = f1.render(str(monstr.get_current_health()), True,
+                          (0, 180, 0))
+        screen.blit(text1, (445, 95))
 
 
 class inventary(pygame.sprite.Sprite):
