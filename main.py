@@ -20,10 +20,11 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():
-    global monstr, monstr_exist_flag, hpbar
+    global monstr, monstr_exist_flag, hpbar, power_panel
     monstr = monstr()
     hpbar = healthBar()
     monstr_exist_flag = True
+    power_panel = powerPanel()
 
 
 def exit_menu():
@@ -107,6 +108,7 @@ class monstr(pygame.sprite.Sprite):
                 self.oldHelthPoint += 10
                 self.experience += 10
                 self.image = random.choice(self.monstres)
+                self.mask = pygame.mask.from_surface(self.image)
             self.monstr_already_move = False
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False:
             self.rect.x -= 5
@@ -144,8 +146,33 @@ class inventary(pygame.sprite.Sprite):
 
 
 class powerPanel(pygame.sprite.Sprite):
-    pass
+    power_panel_img = load_image('powers_panel.png')
+    power_panel_img = pygame.transform.scale(power_panel_img, (width + 100, 200))
 
+    def __init__(self):
+        super().__init__(player_sprites)
+        self.image = self.power_panel_img
+        self.rect = self.image.get_rect()
+        self.rect.x = -50
+        self.rect.y = height - self.rect.height + 15
+        self.power1 = any_power('power_lkm.jpg', 2, 0, (579, 924))
+
+    def update(self):
+        pass
+
+class any_power(pygame.sprite.Sprite):
+    def __init__(self, power, damage, cooldown, pos):
+        super().__init__(player_sprites)
+        self.image = load_image(power)
+        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+        self.damage = damage
+        self.cooldown = cooldown
+
+    def power_update(self):
+        pass
 
 class game(pygame.sprite.Sprite):
     game_background = [load_image("bg_game1.jpg"), load_image("bg_game2.jpg"), load_image("bg_game3.jpg")]
@@ -185,6 +212,7 @@ all_sprites = pygame.sprite.Group()
 mouse_sprites = pygame.sprite.Group()
 monstr_sprites = pygame.sprite.Group()
 healthBar_sprite = pygame.sprite.Group()
+player_sprites = pygame.sprite.Group()
 menu = menu(0, 0, 0, (0, 0))
 mouse = mouse((0, 0))
 
@@ -205,10 +233,12 @@ while running:
     all_sprites.draw(screen)
     monstr_sprites.update()
     monstr_sprites.draw(screen)
-    mouse_sprites.update()
-    mouse_sprites.draw(screen)
+    player_sprites.update()
+    player_sprites.draw(screen)
     healthBar_sprite.update()
     healthBar_sprite.draw(screen)
+    mouse_sprites.update()
+    mouse_sprites.draw(screen)
     pygame.display.flip()
     pygame.display.update()
     clock.tick(fps)
