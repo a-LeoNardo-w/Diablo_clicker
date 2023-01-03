@@ -1,4 +1,5 @@
-# Territory_Invaders
+# Diablo_Clicker
+
 Авторы:
   - Шалагин Лев
   - Марышев Алексей
