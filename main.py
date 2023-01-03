@@ -20,19 +20,19 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():
-    global monstr, monstr_exist_flag, hpbar, power_panel
-    monstr = monstr()
-    hpbar = healthBar()
+    global Monster, monstr_exist_flag, hpbar, power_panel
+    Monster = Monster()
+    hpbar = HealthBar()
     monstr_exist_flag = True
-    power_panel = powerPanel()
+    power_panel = PowerPanel()
 
 
 def exit_menu():
-    global game
-    game = game()
+    global Game
+    Game = Game()
 
 
-class menu_button(pygame.sprite.Sprite):
+class MenuButton(pygame.sprite.Sprite):
     def __init__(self, name_butn, pos, mousepos):
         super().__init__(all_sprites)
         self.name = name_butn
@@ -44,18 +44,18 @@ class menu_button(pygame.sprite.Sprite):
         self.rect.y = pos[1]
 
     def update(self):
-        if pygame.sprite.collide_mask(self, mouse):
+        if pygame.sprite.collide_mask(self, Mouse):
             self.image = load_image(f"{self.name}_2.png")
-            if mouse.click and self.name == 'but_start':
+            if Mouse.click and self.name == 'but_start':
                 all_sprites.empty()
                 exit_menu()
-            elif mouse.click and self.name == 'but_exit':
+            elif Mouse.click and self.name == 'but_exit':
                 exit()
         else:
             self.image = load_image(f"{self.name}_1.png")
 
 
-class menu(pygame.sprite.Sprite):
+class Menu(pygame.sprite.Sprite):
     menu_imag = load_image("bkgd.jpg")
     menu_imag = pygame.transform.scale(menu_imag, size)
 
@@ -64,13 +64,13 @@ class menu(pygame.sprite.Sprite):
         self.image = self.menu_imag
         self.rect = self.image.get_rect()
         self.mousepos = mousepos
-        self.butn_start = menu_button('but_start', (350, 200), mousepos)
-        self.butn_exit = menu_button('but_exit', (350, 400), mousepos)
+        self.butn_start = MenuButton('but_start', (350, 200), mousepos)
+        self.butn_exit = MenuButton('but_exit', (350, 400), mousepos)
 
 
 # Начальный экран конец--------------------------
 # Game Начало
-class monstr(pygame.sprite.Sprite):
+class Monster(pygame.sprite.Sprite):
     monstres = [load_image("monstr1.png"), load_image("monstr2.png"), load_image("monstr3.png"),
                        load_image("monstr4.png"), load_image("monstr5.png")]
 
@@ -87,18 +87,18 @@ class monstr(pygame.sprite.Sprite):
         self.oldHelthPoint = self.helthPoint
 
     def update(self):
-        if pygame.sprite.collide_mask(self, mouse):
-            mouse.image = load_image('attack.png')
-            mouse.image = pygame.transform.scale(mouse.image, (100, 100))
-            mouse.rect.x = mouse.mousepos[0] - 24
-            mouse.rect.y = mouse.mousepos[1] - 10
+        if pygame.sprite.collide_mask(self, Mouse):
+            Mouse.image = load_image('attack.png')
+            Mouse.image = pygame.transform.scale(Mouse.image, (100, 100))
+            Mouse.rect.x = Mouse.mousepos[0] - 24
+            Mouse.rect.y = Mouse.mousepos[1] - 10
         else:
-            mouse.image = load_image('mouse_cursor.png')
-            mouse.image = pygame.transform.scale(mouse.image, (60, 60))
+            Mouse.image = load_image('mouse_cursor.png')
+            Mouse.image = pygame.transform.scale(Mouse.image, (60, 60))
 
     def take_damage(self, event):
         if pygame.sprite.collide_mask(self,
-                                      mouse) and event.type == pygame.MOUSEBUTTONDOWN and self.monstr_already_move and \
+                                      Mouse) and event.type == pygame.MOUSEBUTTONDOWN and self.monstr_already_move and \
                 pygame.mouse.get_pressed(3)[0]:
             self.rect.x += 5
             self.rect.y += 5
@@ -125,7 +125,7 @@ class monstr(pygame.sprite.Sprite):
         return (self.rect.x, self.rect.y)
 
 
-class healthBar(pygame.sprite.Sprite):
+class HealthBar(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(healthBar_sprite)
         self.image = pygame.Surface((0, 0))
@@ -134,18 +134,18 @@ class healthBar(pygame.sprite.Sprite):
 
     def update(self):
         pygame.draw.rect(screen, (100, 100, 100), (260, 90, 400, 30))
-        pygame.draw.rect(screen, (255, 0, 0), (260, 90, monstr.get_current_health()/(monstr.get_max_health()/400), 30))
+        pygame.draw.rect(screen, (255, 0, 0), (260, 90, Monster.get_current_health() / (Monster.get_max_health() / 400), 30))
         f1 = pygame.font.Font(None, 36)
-        text1 = f1.render(str(monstr.get_current_health()), True,
+        text1 = f1.render(str(Monster.get_current_health()), True,
                           (0, 180, 0))
         screen.blit(text1, (445, 95))
 
 
-class inventary(pygame.sprite.Sprite):
+class Inventory(pygame.sprite.Sprite):
     pass
 
 
-class powerPanel(pygame.sprite.Sprite):
+class PowerPanel(pygame.sprite.Sprite):
     power_panel_img = load_image('powers_panel.png')
     power_panel_img = pygame.transform.scale(power_panel_img, (width + 100, 200))
 
@@ -155,12 +155,12 @@ class powerPanel(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = -50
         self.rect.y = height - self.rect.height + 15
-        self.power1 = any_power('power_lkm.jpg', 2, 0, (579, 924))
+        self.power1 = AnyPower('power_lkm.jpg', 2, 0, (579, 924))
 
     def update(self):
         pass
 
-class any_power(pygame.sprite.Sprite):
+class AnyPower(pygame.sprite.Sprite):
     def __init__(self, power, damage, cooldown, pos):
         super().__init__(player_sprites)
         self.image = load_image(power)
@@ -174,7 +174,7 @@ class any_power(pygame.sprite.Sprite):
     def power_update(self):
         pass
 
-class game(pygame.sprite.Sprite):
+class Game(pygame.sprite.Sprite):
     game_background = [load_image("bg_game1.jpg"), load_image("bg_game2.jpg"), load_image("bg_game3.jpg")]
 
     def __init__(self):
@@ -185,7 +185,7 @@ class game(pygame.sprite.Sprite):
         monstar_create()
 # Game Конец
 
-class mouse(pygame.sprite.Sprite):
+class Mouse(pygame.sprite.Sprite):
     menu_imag = load_image("mouse_cursor.png")
     menu_imag = pygame.transform.scale(menu_imag, (60, 60))
 
@@ -213,8 +213,8 @@ mouse_sprites = pygame.sprite.Group()
 monstr_sprites = pygame.sprite.Group()
 healthBar_sprite = pygame.sprite.Group()
 player_sprites = pygame.sprite.Group()
-menu = menu(0, 0, 0, (0, 0))
-mouse = mouse((0, 0))
+menu = Menu(0, 0, 0, (0, 0))
+mouse = Mouse((0, 0))
 
 while running:
     for event in pygame.event.get():
@@ -227,7 +227,7 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pressed(3)[0] == False:
             mouse.click = False
         if monstr_exist_flag:
-            monstr.take_damage(event)
+            Monster.take_damage(event)
 
     all_sprites.update()
     all_sprites.draw(screen)
