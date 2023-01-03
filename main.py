@@ -98,7 +98,7 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
 
         if self.helthPoint <= 0:  # если жизни монстра становятся меншье нуля, то(!это типо я создам нового монстра!)
             self.helthPoint = self.oldHelthPoint + 10  # восстанавливаем hp и добавляем ещё 10(типо сильнее)
-            self.oldHelthPoint += self.helthPoint
+            self.oldHelthPoint = self.helthPoint
             self.experience += 10  # увеличение опыта получаемое при убийстве
             self.image = random.choice(self.monstres)  # смена картинки на нового монстра
             self.mask = pygame.mask.from_surface(self.image)  # создания новой обводки(колайдера)
