@@ -20,8 +20,8 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():
-    global monstr, monstr_exist_flag, hpbar, power_panel
-    monstr = monstr()
+    global monstr_d, monstr_exist_flag, hpbar, power_panel
+    monstr_d = monstr()
     hpbar = healthBar()
     monstr_exist_flag = True
     power_panel = powerPanel()
@@ -96,19 +96,20 @@ class monstr(pygame.sprite.Sprite):
             mouse.image = load_image('mouse_cursor.png')
             mouse.image = pygame.transform.scale(mouse.image, (60, 60))
 
+        if self.helthPoint <= 0:
+            self.helthPoint = self.oldHelthPoint + 10
+            self.oldHelthPoint += 10
+            self.experience += 10
+            self.image = random.choice(self.monstres)
+            self.mask = pygame.mask.from_surface(self.image)
+
     def take_damage(self, event):
         if pygame.sprite.collide_mask(self,
                                       mouse) and event.type == pygame.MOUSEBUTTONDOWN and self.monstr_already_move and \
                 pygame.mouse.get_pressed(3)[0]:
             self.rect.x += 5
             self.rect.y += 5
-            self.helthPoint -= 2
-            if self.helthPoint <= 0:
-                self.helthPoint = self.oldHelthPoint + 10
-                self.oldHelthPoint += 10
-                self.experience += 10
-                self.image = random.choice(self.monstres)
-                self.mask = pygame.mask.from_surface(self.image)
+            self.helthPoint -= (power_panel.power1.damage + power_panel.power1.baff_dmg)
             self.monstr_already_move = False
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False:
             self.rect.x -= 5
@@ -134,9 +135,10 @@ class healthBar(pygame.sprite.Sprite):
 
     def update(self):
         pygame.draw.rect(screen, (100, 100, 100), (260, 90, 400, 30))
-        pygame.draw.rect(screen, (255, 0, 0), (260, 90, monstr.get_current_health()/(monstr.get_max_health()/400), 30))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (260, 90, monstr_d.get_current_health() / (monstr_d.get_max_health() / 400), 30))
         f1 = pygame.font.Font(None, 36)
-        text1 = f1.render(str(monstr.get_current_health()), True,
+        text1 = f1.render(str(monstr_d.get_current_health()), True,
                           (0, 180, 0))
         screen.blit(text1, (445, 95))
 
@@ -155,24 +157,62 @@ class powerPanel(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = -50
         self.rect.y = height - self.rect.height + 15
-        self.power1 = any_power('power_lkm.jpg', 2, 0, (579, 924))
+        self.power1 = any_power('power_lkm.jpg', 2, 0, 'asd', (583, 924))
+        self.power2 = any_power('power_first.jpg', 10, 3, pygame.K_1, (349, 926))
+        self.power3 = any_power('power_second.jpg', 0, 10, pygame.K_2, (405, 926), True, 5, 5)
 
     def update(self):
         pass
 
+
 class any_power(pygame.sprite.Sprite):
-    def __init__(self, power, damage, cooldown, pos):
+    def __init__(self, power, damage, cooldown, key, pos, baff=False, baff_dmg=0, baff_time=0):
         super().__init__(player_sprites)
-        self.image = load_image(power)
+        self.power_img = load_image(power)
+        self.power_img_cd = self.power_img
+        if cooldown != 0:
+            self.power_img_cd = load_image(f'{power[:-4]}_cd.jpg')
+        self.image = self.power_img
         self.rect = self.image.get_rect()
-        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.image = pygame.transform.scale(self.image, (43, 50))
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         self.damage = damage
-        self.cooldown = cooldown
+        self.cooldown = cooldown * (fps - 50)
+        self.key = key
+        self.power_ready = 0
+        self.baff = baff
+        self.baff_dmg = baff_dmg
+        self.baff_time = baff_time * (fps - 50)
+        self.baff_time_work = baff_time * (fps - 50)
 
-    def power_update(self):
-        pass
+    def update(self):
+        if self.power_ready != self.cooldown:
+            self.power_ready += 1
+            self.image = self.power_img_cd
+            self.image = pygame.transform.scale(self.image, (43, 50))
+        else:
+            self.image = self.power_img
+            self.image = pygame.transform.scale(self.image, (43, 50))
+        if self.baff_time_work != self.baff_time:
+            self.baff_time_work += 1
+            power_panel.power1.baff_dmg = 5
+            power_panel.power2.baff_dmg = 5
+            power_panel.power3.baff_dmg = 5
+        else:
+            power_panel.power1.baff_dmg = 0
+            power_panel.power2.baff_dmg = 0
+            power_panel.power3.baff_dmg = 0
+
+    def power_update(self, event):
+        if event.key == self.key and self.power_ready == self.cooldown:
+            if self.baff is False:
+                monstr_d.helthPoint -= (self.damage + self.baff_dmg)
+                self.power_ready = 0
+            if self.baff is True:
+                self.baff_time_work = 0
+                self.power_ready = 0
+
 
 class game(pygame.sprite.Sprite):
     game_background = [load_image("bg_game1.jpg"), load_image("bg_game2.jpg"), load_image("bg_game3.jpg")]
@@ -227,7 +267,10 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pressed(3)[0] == False:
             mouse.click = False
         if monstr_exist_flag:
-            monstr.take_damage(event)
+            monstr_d.take_damage(event)
+            if event.type == pygame.KEYDOWN:
+                power_panel.power2.power_update(event)
+                power_panel.power3.power_update(event)
 
     all_sprites.update()
     all_sprites.draw(screen)
