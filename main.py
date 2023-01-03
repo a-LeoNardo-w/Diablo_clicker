@@ -157,7 +157,7 @@ class powerPanel(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = -50
         self.rect.y = height - self.rect.height + 15
-        self.power1 = any_power('data/power_lkm.jpg', 2, 0, (50, 50))
+        self.power1 = any_power('power_lkm.jpg', 2, 0, (579, 924))
 
     def update(self):
         pass
@@ -167,6 +167,7 @@ class any_power(pygame.sprite.Sprite):
         super().__init__(player_sprites)
         self.image = load_image(power)
         self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (50, 50))
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         self.damage = damage
