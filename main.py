@@ -22,9 +22,10 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():  # создания монстров и всех компонентов
-    global monster, monster_exist_flag, hpbar, power_panel
+    global monster, monster_exist_flag, hpbar, power_panel, player
     monster = Monster()
     hpbar = HealthBar()
+    player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
 
@@ -146,6 +147,35 @@ class HealthBar(pygame.sprite.Sprite):  # класс полоска жизни
 class Inventory(pygame.sprite.Sprite):  # класс инвентаря
     pass
 
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(player_sprites)
+        self.frames = []
+        self.cut_sheet(load_image("avatares_r.png"), 5, 2)
+        self.cur_frame = 5
+        self.image = random.choice(self.frames)
+        pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.rect.move(0, 0)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.mouse_already_press = True
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        if self.mouse_already_press == False and pygame.mouse.get_pressed(3)[0] == False:
+            self.mouse_already_press = True
+        elif pygame.sprite.collide_mask(self, mouse) and pygame.mouse.get_pressed(3)[0] and self.mouse_already_press:
+            # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
+            print('Нажал')
+            self.mouse_already_press = False
 
 class PowerPanel(pygame.sprite.Sprite):  # класс панели способностей
     power_panel_img = load_image('powers_panel.png')
