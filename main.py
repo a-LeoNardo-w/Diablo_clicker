@@ -159,10 +159,15 @@ class PowerPanel(pygame.sprite.Sprite):  # класс панели способ�
         self.rect.y = height - self.rect.height + 15
         self.power1 = AnyPower('power_lkm.jpg', 2, 0, 'asd', (583, 924))  # способность лкм
         self.power2 = AnyPower('power_first.jpg', 10, 3, pygame.K_1, (349, 926))  # способность 1
+        self.power4 = AnyPower('power_third.jpg', 30, 10, pygame.K_3, (464, 926))  # способность 3
+        self.power5 = AnyPower('power_fourth.jpg', 50, 15, pygame.K_4, (522, 926))  # способность 4
         self.power3 = AnyPower('power_second.jpg', 0, 10, pygame.K_2, (405, 926), True, 5, 5)  # способность 2
 
-    def update(self):
-        pass
+    def power_panel_powers_update(self, event):
+        power_panel.power2.power_update(event)  # проверка на нажатие способности 1
+        power_panel.power3.power_update(event)  # проверка на нажатие способности 2
+        power_panel.power4.power_update(event)  # проверка на нажатие способности 3
+        power_panel.power5.power_update(event)  # проверка на нажатие способности 4
 
 
 class AnyPower(pygame.sprite.Sprite):  # класс способности
@@ -195,13 +200,15 @@ class AnyPower(pygame.sprite.Sprite):  # класс способности
             self.image = pygame.transform.scale(self.image, (43, 50))
         if self.baff_time_work != self.baff_time:  # если таймер баффа не равен времени действия бафаа, то
             self.baff_time_work += 1  # прибавляем таймер
-            power_panel.power1.baff_dmg = 5  # дополняем доп урон к способности 1
-            power_panel.power2.baff_dmg = 5  # дополняем доп урон к способности 2
-            power_panel.power3.baff_dmg = 5  # дополняем доп урон к способности 3
+            power_panel.power1.baff_dmg = power_panel.power3.baff_dmg  # дополняем доп урон к способности 1
+            power_panel.power2.baff_dmg = power_panel.power3.baff_dmg  # дополняем доп урон к способности 2
+            power_panel.power4.baff_dmg = power_panel.power3.baff_dmg  # дополняем доп урон к способности 3
+            power_panel.power5.baff_dmg = power_panel.power3.baff_dmg  # дополняем доп урон к способности 4
         else:  # после конца действия:
             power_panel.power1.baff_dmg = 0  # убираем доп урон к способности 1
-            power_panel.power2.baff_dmg = 0  # убираем доп урон к способности 1
-            power_panel.power3.baff_dmg = 0  # убираем доп урон к способности 1
+            power_panel.power2.baff_dmg = 0  # убираем доп урон к способности 2
+            power_panel.power4.baff_dmg = 0  # убираем доп урон к способности 3
+            power_panel.power5.baff_dmg = 0  # убираем доп урон к способности 4
 
     def power_update(self, event):  # обновление нужное для проверки нажатия на кнопку
         if event.key == self.key and self.power_ready == self.cooldown:  # если нажатая кнопка равна
@@ -275,8 +282,7 @@ while running:  # вечный цикл игры
         if monster_exist_flag:  # проверяем существует ли монстр
             monster.take_damage(event)  # постоянно проверяем получает ли монстр урон
             if event.type == pygame.KEYDOWN:  # проверяем на нажатие клавиши способностей
-                power_panel.power2.power_update(event)  # проверка на нажатие способности 1
-                power_panel.power3.power_update(event)  # проверка на нажатие способности 2
+                power_panel.power_panel_powers_update(event)
 
     all_sprites.update()
     all_sprites.draw(screen)
