@@ -9,6 +9,7 @@ pygame.init()
 size = width, height = 1024, 1000
 screen = pygame.display.set_mode(size)
 monster_exist_flag = False  # переменная необходимая для создания монстра и всех компонентов после начала игры
+endscreen_exist_flag = True
 
 
 # Начальный экран начало--------------------------
@@ -33,6 +34,21 @@ def monstar_create():  # создания монстров и всех комп�
     pygame.mixer.music.set_volume(0.4)
 
 
+def endscreen_create():
+    global endscreen_exist_flag, endscreen, monster, hpbar, power_panel, player
+    endscreen = Endscreen()
+    monster.kill()
+    hpbar.kill()
+    power_panel.power1.kill()
+    power_panel.power2.kill()
+    power_panel.power3.kill()
+    power_panel.power4.kill()
+    power_panel.power5.kill()
+    power_panel.kill()
+    player.kill()
+    endscreen_exist_flag = False
+
+
 def exit_menu():  # закрытие меню создание элемента Game()
     global game
     game = Game()
@@ -40,7 +56,7 @@ def exit_menu():  # закрытие меню создание элемента 
 
 class MenuButton(pygame.sprite.Sprite):  # класс кнопки в меню
     def __init__(self, name_butn, pos):
-        super().__init__(all_sprites)
+        super().__init__(button_sprites)
         self.name = name_butn  # картинка кнопки
         self.image = load_image(f"{self.name}_1.png")
         self.rect = self.image.get_rect()
@@ -52,8 +68,11 @@ class MenuButton(pygame.sprite.Sprite):  # класс кнопки в меню
             self.image = load_image(f"{self.name}_2.png")
             if mouse.click and self.name == 'but_start':  # проверяем состояние нажатия мыши и то на что мы навились
                 all_sprites.empty()  # удаляем меню(чистим спрайты)
+                button_sprites.empty()
                 exit_menu()  # запускаем функцию по созданию игры
             elif mouse.click and self.name == 'but_exit':
+                exit()
+            elif mouse.click and self.name == 'but_close':
                 exit()
         else:
             self.image = load_image(f"{self.name}_1.png")
@@ -113,7 +132,7 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             self.mask = pygame.mask.from_surface(self.image)  # создания новой обводки(колайдера)
 
     def take_damage(self, event):  # функция для получения урона монстром !от мышки!
-        if pygame.sprite.collide_mask(self, mouse) and self.monstr_already_move and pygame.mouse.get_pressed(3)[0]\
+        if pygame.sprite.collide_mask(self, mouse) and self.monstr_already_move and pygame.mouse.get_pressed(3)[0] \
                 and self.player_list_is_off:
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
             self.rect.x += 5
@@ -231,12 +250,12 @@ class PlayerList(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image, (350, 50))
 
 
-
 class button(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__(all_sprites)
         self.image = load_image('but_close_1')
+
 
 class PowerPanel(pygame.sprite.Sprite):  # класс панели способностей
     power_panel_img = load_image('powers_panel.png')
@@ -316,6 +335,7 @@ class AnyPower(pygame.sprite.Sprite):  # класс способности
 
 class Game(pygame.sprite.Sprite):  # класс Игры
     game_background = [load_image("bg_game1.jpg"), load_image("bg_game2.jpg"), load_image("bg_game3.jpg")]  # список
+
     # задних фонов
 
     def __init__(self):
@@ -328,6 +348,57 @@ class Game(pygame.sprite.Sprite):  # класс Игры
 
 # Game Конец
 
+class Endscreen(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(end_game_sprites)
+        self.lvl = player.lvl
+        self.money = player.money
+        self.image = load_image("bkgd.jpg")
+        self.image = pygame.transform.scale(self.image, size)
+        self.rect = self.image.get_rect()
+        self.buttonEnd = MenuButton('but_close', (350, 500))
+        mouse.image = load_image("mouse_cursor.png")
+        pygame.transform.scale(mouse.image, (60, 60))
+        self.end_menu = load_image('end_menu.png')
+        self.end_menu_rect = self.end_menu.get_rect()
+        self.endresult = EndResult(self.lvl, self.money)
+
+
+    def update(self):
+        pass
+
+
+class EndResult(pygame.sprite.Sprite):
+    def __init__(self, lvl, money):
+        self.lvl = lvl
+        self.money = money
+        super().__init__(button_sprites)
+        self.image = load_image('end_menu.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = 290
+        self.rect.y = 200
+        self.endtext = EndTextResult(self.lvl, self.money)
+
+    def update(self):
+        pass
+
+class EndTextResult(pygame.sprite.Sprite):
+    def __init__(self, lvl, money):
+        self.lvl = lvl
+        self.money = money
+        super().__init__(end_game_text_sprites)
+        self.image = pygame.Surface((0, 0))
+        self.rect = self.image.get_rect()
+        f1 = pygame.font.Font(None, 36)  # текст hp
+        f2 = pygame.font.Font(None, 30)  # текст hp
+        self.text1 = f1.render(f'Поздравляю!', True, (0, 180, 0))
+        self.text2 = f2.render(f'Ваш счёт: УРОВЕНЬ {self.lvl}', True, (0, 180, 0))
+        self.text3 = f2.render(f'Ваш счёт: ЗОЛОТО {self.money}', True, (0, 180, 0))
+
+    def update(self):
+        screen.blit(self.text1, (350, 230))
+        screen.blit(self.text2, (350, 300))
+        screen.blit(self.text3, (350, 350))
 class Mouse(pygame.sprite.Sprite):  # класс Мыши
     menu_imag = load_image("mouse_cursor.png")  # картинка мыши
     menu_imag = pygame.transform.scale(menu_imag, (60, 60))
@@ -355,9 +426,12 @@ clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()  # группа всех спрайтов(пример: меню, кнопки в меню)
 mouse_sprites = pygame.sprite.Group()  # группа спрайтов мышки(пример: мышка)
 monstr_sprites = pygame.sprite.Group()  # группа спрайтов монстра(пример: монстр)
+button_sprites = pygame.sprite.Group()
 healthBar_sprite = pygame.sprite.Group()  # группа спрайтов монстра(пример: полоса жизни монстра)
 player_sprites = pygame.sprite.Group()  # группа спрайтов монстра(пример: способности, панель способностей)
 player_list_sprites = pygame.sprite.Group()
+end_game_sprites = pygame.sprite.Group()
+end_game_text_sprites = pygame.sprite.Group()
 menu = Menu()  # создание меню
 mouse = Mouse((0, 0))  # создание мыши
 while running:  # вечный цикл игры
@@ -375,7 +449,8 @@ while running:  # вечный цикл игры
             monster.take_damage(event)  # постоянно проверяем получает ли монстр урон
             if event.type == pygame.KEYDOWN:  # проверяем на нажатие клавиши способностей
                 power_panel.power_panel_powers_update(event)
-
+            if player.lvl >= 2 and endscreen_exist_flag:
+                endscreen_create()
     all_sprites.update()
     all_sprites.draw(screen)
     monstr_sprites.update()
@@ -386,7 +461,13 @@ while running:  # вечный цикл игры
     healthBar_sprite.draw(screen)
     player_list_sprites.update()
     player_list_sprites.draw(screen)
-    mouse_sprites.update()
+    end_game_sprites.update()
+    end_game_sprites.draw(screen)
+    button_sprites.update()
+    button_sprites.draw(screen)
+    button_sprites.update()
+    end_game_text_sprites.draw(screen)
+    end_game_text_sprites.update()
     mouse_sprites.draw(screen)
     pygame.display.flip()
     pygame.display.update()
