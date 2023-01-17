@@ -28,9 +28,9 @@ def monstar_create():  # создания монстров и всех комп�
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
-    pygame.mixer.music.load('data/music.mp3')
+    pygame.mixer.music.load('data/bg_music.mp3')
     pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.6)
+    pygame.mixer.music.set_volume(0.4)
 
 
 def exit_menu():  # закрытие меню создание элемента Game()
@@ -87,11 +87,13 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
         self.rect.x = 160
         self.helthPoint = hp
         self.experience = exp
+        self.money = 2
         self.oldHelthPoint = self.helthPoint  # нужна для HealthBar, чтобы помнить максимальное количество hp;
         # также нужно, чтобы создать следующего монстра с увеличенным Hp
+        self.player_list_is_off = True
 
     def update(self):
-        if pygame.sprite.collide_mask(self, mouse):  # если мышка касается монстра, то
+        if pygame.sprite.collide_mask(self, mouse) and self.player_list_is_off:  # если мышка касается монстра, то
             mouse.image = load_image('attack.png')  # курсор мыши меняется на меч
             mouse.image = pygame.transform.scale(mouse.image, (100, 100))  # снова создаётся обводка(колайдер)
             mouse.rect.x, mouse.rect.y = mouse.mousepos[0] - 24, mouse.mousepos[1] - 10  # изменения в
@@ -101,6 +103,9 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             mouse.image = pygame.transform.scale(mouse.image, (60, 60))  # вернуть старую обводку(колайдер)
 
         if self.helthPoint <= 0:  # если жизни монстра становятся меншье нуля, то(!это типо я создам нового монстра!)
+            player.experience += self.experience
+            player.money += self.money
+            self.money = self.money + 1
             self.helthPoint = self.oldHelthPoint + 10  # восстанавливаем hp и добавляем ещё 10(типо сильнее)
             self.oldHelthPoint = self.helthPoint
             self.experience += 10  # увеличение опыта получаемое при убийстве
@@ -108,14 +113,15 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             self.mask = pygame.mask.from_surface(self.image)  # создания новой обводки(колайдера)
 
     def take_damage(self, event):  # функция для получения урона монстром !от мышки!
-        if pygame.sprite.collide_mask(self, mouse) and self.monstr_already_move and pygame.mouse.get_pressed(3)[0]:
+        if pygame.sprite.collide_mask(self, mouse) and self.monstr_already_move and pygame.mouse.get_pressed(3)[0]\
+                and self.player_list_is_off:
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
             self.rect.x += 5
             self.rect.y += 5
             self.helthPoint -= (power_panel.power1.damage + power_panel.power1.baff_dmg)
             self.monstr_already_move = False  # ждём пока игрок отожмёт лкм, это нужно для того, чтобы
             # игрок не мог просто зажать лкм и наносить беспрерывный урон
-        elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False:  # отжатие кнопки
+        elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False and self.player_list_is_off:  # отжатие кнопки
             self.rect.x -= 5
             self.rect.y -= 5
             self.monstr_already_move = True
@@ -156,7 +162,10 @@ class Player(pygame.sprite.Sprite):
         super().__init__(player_sprites)
         self.frames = []
         self.cut_sheet(load_image("avatares_r.png"), 5, 2)
-        self.cur_frame = 5
+        self.lvl = 1
+        self.experience = 0
+        self.experience_for_new_lvl = 10
+        self.money = 0
         self.image = random.choice(self.frames)
         self.image = pygame.transform.scale(self.image, (160, 160))
         self.rect = self.rect.move(0, 0)
@@ -179,6 +188,10 @@ class Player(pygame.sprite.Sprite):
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
             self.playerlist = PlayerList(10, 10, 10)
             self.mouse_already_press = False
+        if self.experience >= self.experience_for_new_lvl:
+            self.lvl += 1
+            self.experience = 0
+            self.experience_for_new_lvl = self.experience_for_new_lvl + 10 * self.lvl
 
 
 class PlayerList(pygame.sprite.Sprite):
@@ -187,9 +200,12 @@ class PlayerList(pygame.sprite.Sprite):
         self.exp = exp
         self.money = money
         self.count_died_monsters = count_died_monsters
-        self.image = pygame.Surface((0, 0))
-        self.image.fill((255, 0, 0))
-        self.rect = self.image.get_rect(center=(400, 400))
+        self.image = load_image('but_close_1.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = 36
+        self.rect.y = 370
+        self.image = pygame.transform.scale(self.image, (350, 50))
+        monster.player_list_is_off = False
 
     def update(self):
         self.playerlist = load_image('playerList.png')
@@ -199,11 +215,28 @@ class PlayerList(pygame.sprite.Sprite):
         self.avatar_rect = self.avatar.get_rect()
         self.avatar = pygame.transform.scale(self.avatar, (140, 140))
         screen.blit(self.avatar, [19, 220])
-        lvl = pygame.font.Font(None, 27)  # текст lvl
-        text1 = lvl.render(f'Уровень{}', True, (0, 180, 0))
-        screen.blit(text1, (170, 270))
+        font = pygame.font.Font(None, 27)  # шрифт
+        lvl_txt = font.render(f'Уровень {player.lvl}', True, (0, 180, 0))  # текст lvl
+        screen.blit(lvl_txt, (170, 270))
+        money_txt = font.render(f'Золото {player.money}', True, (0, 180, 0))  # текст money
+        screen.blit(money_txt, (170, 300))
+        if pygame.sprite.collide_mask(self, mouse):
+            self.image = load_image('but_close_2.png')
+            self.image = pygame.transform.scale(self.image, (350, 50))
+            if pygame.mouse.get_pressed(3)[0]:
+                monster.player_list_is_off = True
+                self.kill()
+        else:
+            self.image = load_image('but_close_1.png')
+            self.image = pygame.transform.scale(self.image, (350, 50))
 
 
+
+class button(pygame.sprite.Sprite):
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = load_image('but_close_1')
 
 class PowerPanel(pygame.sprite.Sprite):  # класс панели способностей
     power_panel_img = load_image('powers_panel.png')
