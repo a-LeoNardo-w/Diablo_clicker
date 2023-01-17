@@ -28,6 +28,9 @@ def monstar_create():  # создания монстров и всех комп�
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
+    pygame.mixer.music.load('data/music.mp3')
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.6)
 
 
 def exit_menu():  # закрытие меню создание элемента Game()
@@ -155,7 +158,7 @@ class Player(pygame.sprite.Sprite):
         self.cut_sheet(load_image("avatares_r.png"), 5, 2)
         self.cur_frame = 5
         self.image = random.choice(self.frames)
-        pygame.transform.scale(self.image, (40, 40))
+        self.image = pygame.transform.scale(self.image, (160, 160))
         self.rect = self.rect.move(0, 0)
         self.mask = pygame.mask.from_surface(self.image)
         self.mouse_already_press = True
@@ -174,8 +177,33 @@ class Player(pygame.sprite.Sprite):
             self.mouse_already_press = True
         elif pygame.sprite.collide_mask(self, mouse) and pygame.mouse.get_pressed(3)[0] and self.mouse_already_press:
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
-            print('Нажал')
+            self.playerlist = PlayerList(10, 10, 10)
             self.mouse_already_press = False
+
+
+class PlayerList(pygame.sprite.Sprite):
+    def __init__(self, exp, money, count_died_monsters):
+        super().__init__(player_list_sprites)
+        self.exp = exp
+        self.money = money
+        self.count_died_monsters = count_died_monsters
+        self.image = pygame.Surface((0, 0))
+        self.image.fill((255, 0, 0))
+        self.rect = self.image.get_rect(center=(400, 400))
+
+    def update(self):
+        self.playerlist = load_image('playerList.png')
+        self.player_rect = self.playerlist.get_rect()
+        screen.blit(self.playerlist, [0, 190])
+        self.avatar = player.image
+        self.avatar_rect = self.avatar.get_rect()
+        self.avatar = pygame.transform.scale(self.avatar, (140, 140))
+        screen.blit(self.avatar, [19, 220])
+        lvl = pygame.font.Font(None, 27)  # текст lvl
+        text1 = lvl.render(f'Уровень{}', True, (0, 180, 0))
+        screen.blit(text1, (170, 270))
+
+
 
 class PowerPanel(pygame.sprite.Sprite):  # класс панели способностей
     power_panel_img = load_image('powers_panel.png')
@@ -296,6 +324,7 @@ mouse_sprites = pygame.sprite.Group()  # группа спрайтов мышк�
 monstr_sprites = pygame.sprite.Group()  # группа спрайтов монстра(пример: монстр)
 healthBar_sprite = pygame.sprite.Group()  # группа спрайтов монстра(пример: полоса жизни монстра)
 player_sprites = pygame.sprite.Group()  # группа спрайтов монстра(пример: способности, панель способностей)
+player_list_sprites = pygame.sprite.Group()
 menu = Menu()  # создание меню
 mouse = Mouse((0, 0))  # создание мыши
 while running:  # вечный цикл игры
@@ -322,6 +351,8 @@ while running:  # вечный цикл игры
     player_sprites.draw(screen)
     healthBar_sprite.update()
     healthBar_sprite.draw(screen)
+    player_list_sprites.update()
+    player_list_sprites.draw(screen)
     mouse_sprites.update()
     mouse_sprites.draw(screen)
     pygame.display.flip()
