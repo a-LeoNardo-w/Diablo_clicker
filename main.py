@@ -449,7 +449,7 @@ while running:  # вечный цикл игры
             monster.take_damage(event)  # постоянно проверяем получает ли монстр урон
             if event.type == pygame.KEYDOWN:  # проверяем на нажатие клавиши способностей
                 power_panel.power_panel_powers_update(event)
-            if player.lvl >= 2 and endscreen_exist_flag:
+            if player.lvl >= 15 and endscreen_exist_flag:
                 endscreen_create()
     all_sprites.update()
     all_sprites.draw(screen)
