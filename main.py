@@ -24,11 +24,11 @@ def load_image(name, colorkey=None):
 
 def monstar_create():  # создания монстров и всех компонентов
     global monster, monster_exist_flag, hpbar, power_panel, player
-    monster = Monster()
     hpbar = HealthBar()
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
+    monster = Monster()
     pygame.mixer.music.load('data/bg_music.mp3')
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.4)
@@ -110,8 +110,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
         self.oldHelthPoint = self.helthPoint  # нужна для HealthBar, чтобы помнить максимальное количество hp;
         # также нужно, чтобы создать следующего монстра с увеличенным Hp
         self.player_list_is_off = True
+        self.clickDmg = power_panel.power1.damage
 
     def update(self):
+        self.dmg_to_monster_baff = power_panel.power1.baff_dmg
         if pygame.sprite.collide_mask(self, mouse) and self.player_list_is_off:  # если мышка касается монстра, то
             mouse.image = load_image('attack.png')  # курсор мыши меняется на меч
             mouse.image = pygame.transform.scale(mouse.image, (100, 100))  # снова создаётся обводка(колайдер)
@@ -137,7 +139,11 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
             self.rect.x += 5
             self.rect.y += 5
-            self.helthPoint -= (power_panel.power1.damage + power_panel.power1.baff_dmg)
+            if random.randint(1, 10) in [1, 2, 3]:
+                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff) * 2)
+                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff) * 2))
+            else:
+                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff)
             self.monstr_already_move = False  # ждём пока игрок отожмёт лкм, это нужно для того, чтобы
             # игрок не мог просто зажать лкм и наносить беспрерывный урон
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False and self.player_list_is_off:  # отжатие кнопки
@@ -324,7 +330,11 @@ class AnyPower(pygame.sprite.Sprite):  # класс способности
         if event.key == self.key and self.power_ready == self.cooldown:  # если нажатая кнопка равна
             # кнопке способности и таймер равен времени кд, то
             if self.baff is False:  # если не бафф
-                monster.helthPoint -= (self.damage + self.baff_dmg)  # монстр получает урон
+                if random.randint(1, 10) in [1, 2, 3]:
+                    monster.helthPoint -= ((self.damage + self.baff_dmg) * 2)
+                    Crits((width // 2 - 20, height // 2 - 100), ((self.damage + self.baff_dmg) * 2))
+                else:
+                    monster.helthPoint -= (self.damage + self.baff_dmg)
                 self.power_ready = 0  # и сбрасываем таймер,
                 # чтобы он снова начал отсчёт, чтобы мы не могли пользовать способностью
             if self.baff is True:  # если бафф
@@ -382,6 +392,23 @@ class EndResult(pygame.sprite.Sprite):
     def update(self):
         pass
 
+class Crits(pygame.sprite.Sprite):
+
+    def __init__(self, pos=(10, 10), crit_dmg=0):
+        super().__init__(crits_sprites)
+        self.image = pygame.font.Font(None, 70).render(f'{crit_dmg}', True, (180, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = pos
+        self.velocity = [random.randint(-3, 3), -8]
+        self.gravity = 0.2
+
+    def update(self):
+        self.velocity[1] += self.gravity
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        if self.rect.x < 0:
+            self.kill()
+
 class EndTextResult(pygame.sprite.Sprite):
     def __init__(self, lvl, money):
         self.lvl = lvl
@@ -432,6 +459,7 @@ player_sprites = pygame.sprite.Group()  # группа спрайтов монс
 player_list_sprites = pygame.sprite.Group()
 end_game_sprites = pygame.sprite.Group()
 end_game_text_sprites = pygame.sprite.Group()
+crits_sprites = pygame.sprite.Group()
 menu = Menu()  # создание меню
 mouse = Mouse((0, 0))  # создание мыши
 while running:  # вечный цикл игры
@@ -461,6 +489,8 @@ while running:  # вечный цикл игры
     healthBar_sprite.draw(screen)
     player_list_sprites.update()
     player_list_sprites.draw(screen)
+    crits_sprites.update()
+    crits_sprites.draw(screen)
     end_game_sprites.update()
     end_game_sprites.draw(screen)
     button_sprites.update()
