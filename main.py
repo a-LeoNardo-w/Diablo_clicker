@@ -24,11 +24,11 @@ def load_image(name, colorkey=None):
 
 def monstar_create():  # создания монстров и всех компонентов
     global monster, monster_exist_flag, hpbar, power_panel, player
-    monster = Monster()
     hpbar = HealthBar()
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
+    monster = Monster()
     pygame.mixer.music.load('data/bg_music.mp3')
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.4)
@@ -110,8 +110,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
         self.oldHelthPoint = self.helthPoint  # нужна для HealthBar, чтобы помнить максимальное количество hp;
         # также нужно, чтобы создать следующего монстра с увеличенным Hp
         self.player_list_is_off = True
+        self.clickDmg = power_panel.power1.damage
 
     def update(self):
+        self.dmg_to_monster_baff = power_panel.power1.baff_dmg
         if pygame.sprite.collide_mask(self, mouse) and self.player_list_is_off:  # если мышка касается монстра, то
             mouse.image = load_image('attack.png')  # курсор мыши меняется на меч
             mouse.image = pygame.transform.scale(mouse.image, (100, 100))  # снова создаётся обводка(колайдер)
@@ -138,10 +140,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             self.rect.x += 5
             self.rect.y += 5
             if random.randint(1, 10) in [1, 2, 3]:
-                self.helthPoint -= ((power_panel.power1.damage + power_panel.power1.baff_dmg) * 2)
-                Crits(event.pos, ((power_panel.power1.damage + power_panel.power1.baff_dmg) * 2))
+                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff) * 2)
+                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff) * 2))
             else:
-                self.helthPoint -= (power_panel.power1.damage + power_panel.power1.baff_dmg)
+                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff)
             self.monstr_already_move = False  # ждём пока игрок отожмёт лкм, это нужно для того, чтобы
             # игрок не мог просто зажать лкм и наносить беспрерывный урон
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False and self.player_list_is_off:  # отжатие кнопки
