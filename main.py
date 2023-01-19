@@ -10,6 +10,10 @@ size = width, height = 1024, 1000
 screen = pygame.display.set_mode(size)
 monster_exist_flag = False  # переменная необходимая для создания монстра и всех компонентов после начала игры
 endscreen_exist_flag = True
+inventory_already_exist = True
+inventory_already_open = True
+shop_already_open = True
+inventory = []
 
 
 # Начальный экран начало--------------------------
@@ -23,12 +27,13 @@ def load_image(name, colorkey=None):
 
 
 def monstar_create():  # создания монстров и всех компонентов
-    global monster, monster_exist_flag, hpbar, power_panel, player
+    global monster, monster_exist_flag, hpbar, power_panel, player, shop
     hpbar = HealthBar()
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
     monster = Monster()
+    shop = ShopIcon()
     pygame.mixer.music.load('data/bg_music.mp3')
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.4)
@@ -111,6 +116,7 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
         # также нужно, чтобы создать следующего монстра с увеличенным Hp
         self.player_list_is_off = True
         self.clickDmg = power_panel.power1.damage
+        self.dmg_to_monster_baff = power_panel.power1.baff_dmg
 
     def update(self):
         self.dmg_to_monster_baff = power_panel.power1.baff_dmg
@@ -178,10 +184,6 @@ class HealthBar(pygame.sprite.Sprite):  # класс полоска жизни
         screen.blit(text1, (445, 95))
 
 
-class Inventory(pygame.sprite.Sprite):  # класс инвентаря
-    pass
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(player_sprites)
@@ -207,8 +209,10 @@ class Player(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
-        if self.mouse_already_press == False and pygame.mouse.get_pressed(3)[0] == False:
+        global inventory_already_open
+        if self.mouse_already_press == False and pygame.mouse.get_pressed(3)[0] == False and inventory_already_open:
             self.mouse_already_press = True
+            inventory_already_open = False
         elif pygame.sprite.collide_mask(self, mouse) and pygame.mouse.get_pressed(3)[0] and self.mouse_already_press:
             # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
             self.playerlist = PlayerList(10, 10, 10)
@@ -219,41 +223,142 @@ class Player(pygame.sprite.Sprite):
             self.experience_for_new_lvl = self.experience_for_new_lvl + 10 * self.lvl
 
 
+class ShopIcon(pygame.sprite.Sprite):  # класс ячейки инвентаря
+    def __init__(self):
+        super().__init__(player_list_sprites)
+        self.image = load_image('shop.png')
+        self.image = pygame.transform.scale(self.image, (160, 160))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = (width - 160, 0)
+        self.mouse_already_press = False
+
+    def update(self):
+        global shop_already_open
+        if self.mouse_already_press == False and pygame.mouse.get_pressed(3)[0] == False and shop_already_open:
+            self.mouse_already_press = True
+            shop_already_open = False
+        elif pygame.sprite.collide_mask(self, mouse) and pygame.mouse.get_pressed(3)[0] and self.mouse_already_press:
+            # если мышка касается монстра и игрок уже нажал на монстра и мы нажали лкм
+            self.shop = Shop()
+            self.mouse_already_press = False
+
+
+class ShopItem(pygame.sprite.Sprite):  # класс ячейки инвентаря
+    def __init__(self, pos, item=None, id = -1):
+        super().__init__(button_sprites)
+        self.image = load_image('index_inventory.png')
+        self.image = pygame.transform.scale(self.image, (82, 77))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = pos
+        self.item = item
+        self.id = id
+
+    def update(self):
+        if mouse.click and pygame.sprite.collide_mask(self, mouse):
+            print(self.id)
+class Shop(pygame.sprite.Sprite):
+    def __init__(self):
+        global inventory_already_exist, inventory
+        super().__init__(player_list_sprites)
+        self.image = load_image('but_close_1.png')
+        self.image = pygame.transform.scale(self.image, (140, 35))
+        self.rect = self.image.get_rect()
+        self.rect.x = 750
+        self.rect.y = 800
+        monster.player_list_is_off = False
+        self.shopImg = load_image('shop_inside.png')
+        self.shopImg = pygame.transform.scale(self.shopImg, (430, 700))
+        self.shopImg_rect = self.shopImg.get_rect()
+        self.shopItem = None
+
+    def update(self):
+        global shop_already_open
+        screen.blit(self.shopImg, [width - self.rect.width - 290, 190])
+        font = pygame.font.Font(None, 27)  # шрифт
+        money_txt = font.render(f'Золото {player.money}', True, (0, 180, 0))  # текст money
+        screen.blit(money_txt, (50, 580))
+        if pygame.sprite.collide_mask(self, mouse):
+            self.image = load_image('but_close_2.png')
+            self.image = pygame.transform.scale(self.image, (140, 35))
+            if pygame.mouse.get_pressed(3)[0]:
+                shop_already_open = True
+                monster.player_list_is_off = True
+                self.kill()
+        else:
+            self.image = load_image('but_close_1.png')
+            self.image = pygame.transform.scale(self.image, (140, 35))
+
+class InventoryIndex(pygame.sprite.Sprite):  # класс ячейки инвентаря
+    def __init__(self, pos, item=None, id = -1):
+        super().__init__(button_sprites)
+        self.image = load_image('index_inventory.png')
+        self.image = pygame.transform.scale(self.image, (82, 77))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = pos
+        self.item = item
+        self.id = id
+
+    def update(self):
+        if mouse.click and pygame.sprite.collide_mask(self, mouse):
+            print(self.id)
+
 class PlayerList(pygame.sprite.Sprite):
     def __init__(self, exp, money, count_died_monsters):
+        global inventory_already_exist, inventory
         super().__init__(player_list_sprites)
         self.exp = exp
         self.money = money
         self.count_died_monsters = count_died_monsters
         self.image = load_image('but_close_1.png')
         self.rect = self.image.get_rect()
-        self.rect.x = 36
-        self.rect.y = 370
+        self.rect.x = 40
+        self.rect.y = 525
         self.image = pygame.transform.scale(self.image, (350, 50))
         monster.player_list_is_off = False
+        self.playerlist = load_image('inventory.png')
+        self.playerlist = pygame.transform.scale(self.playerlist, (430, 700))
+        self.player_rect = self.playerlist.get_rect()
+        counter = 0
+        self.inventory = inventory
+        if inventory_already_exist:
+            inventory_already_exist = False
+            for i in range(3):
+                for k in range(5):
+                    self.inventory.append(InventoryIndex((15 + 82 * k, 643 + 77 * i), id=counter))
+                    counter += 1
+        else:
+            self.inventory = inventory
+            for index in self.inventory:
+                index.rect.x = index.rect.x + 500
+                index.rect.y = index.rect.y + 500
+        inventory = self.inventory
 
     def update(self):
-        self.playerlist = load_image('playerList.png')
-        self.player_rect = self.playerlist.get_rect()
+        global inventory_already_open
         screen.blit(self.playerlist, [0, 190])
         self.avatar = player.image
         self.avatar_rect = self.avatar.get_rect()
-        self.avatar = pygame.transform.scale(self.avatar, (140, 140))
-        screen.blit(self.avatar, [19, 220])
+        self.avatar = pygame.transform.scale(self.avatar, (120, 120))
+        screen.blit(self.avatar, [50, 320])
         font = pygame.font.Font(None, 27)  # шрифт
         lvl_txt = font.render(f'Уровень {player.lvl}', True, (0, 180, 0))  # текст lvl
-        screen.blit(lvl_txt, (170, 270))
+        screen.blit(lvl_txt, (50, 480))
         money_txt = font.render(f'Золото {player.money}', True, (0, 180, 0))  # текст money
-        screen.blit(money_txt, (170, 300))
+        screen.blit(money_txt, (50, 580))
         if pygame.sprite.collide_mask(self, mouse):
             self.image = load_image('but_close_2.png')
-            self.image = pygame.transform.scale(self.image, (350, 50))
+            self.image = pygame.transform.scale(self.image, (140, 35))
             if pygame.mouse.get_pressed(3)[0]:
                 monster.player_list_is_off = True
                 self.kill()
+                for index in self.inventory:
+                    index.rect.x = index.rect.x - 500
+                    index.rect.y = index.rect.y - 500
+                inventory_already_open = True
+
         else:
             self.image = load_image('but_close_1.png')
-            self.image = pygame.transform.scale(self.image, (350, 50))
+            self.image = pygame.transform.scale(self.image, (140, 35))
 
 
 class button(pygame.sprite.Sprite):
