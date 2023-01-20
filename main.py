@@ -162,10 +162,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             self.rect.x += 5
             self.rect.y += 5
             if random.randint(1, 10) in [1, 2, 3]:
-                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff) * 2)
-                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff) * 2))
+                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg) * 2)
+                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg) * 2))
             else:
-                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff)
+                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg)
             self.monstr_already_move = False  # ждём пока игрок отожмёт лкм, это нужно для того, чтобы
             # игрок не мог просто зажать лкм и наносить беспрерывный урон
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False and self.player_list_is_off:  # отжатие кнопки
@@ -208,7 +208,7 @@ class Player(pygame.sprite.Sprite):
         self.lvl = 1
         self.experience = 0
         self.experience_for_new_lvl = 10
-        self.money = 500
+        self.money = 0
         self.image = random.choice(self.frames)
         self.image = pygame.transform.scale(self.image, (160, 160))
         self.rect = self.rect.move(0, 0)
@@ -275,6 +275,7 @@ class ShopItem(pygame.sprite.Sprite):  # класс ячейки инвента�
         self.mask = pygame.mask.from_surface(self.image)
         self.itemPrice = price
         self.mouse_preessed = True
+        self.dmg = dmg
 
     def cut_sheet(self, sheet, columns, rows, frame):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -313,10 +314,10 @@ class AddButton(pygame.sprite.Sprite):
     def __init__(self, item=None, pos=(0, 0)):
         super().__init__(button_sprites)
         self.image = load_image('equip_text.png')
-        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.scale(self.image, (60, 25))
         self.rect = self.image.get_rect()
         self.secondImg = load_image('equip_text.png')
-        self.secondImg = pygame.transform.scale(self.secondImg, (100, 100))
+        self.secondImg = pygame.transform.scale(self.secondImg, (60, 25))
         self.item = item
         self.rect.x, self.y = (pos[0] - 10, pos[1] - 5)
         self.open_butt = True
