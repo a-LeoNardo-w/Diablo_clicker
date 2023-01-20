@@ -33,6 +33,7 @@ def monstar_create():  # создания монстров и всех комп�
     player = Player()
     monster_exist_flag = True
     power_panel = PowerPanel()
+    arm = Arm((-500, 0))
     monster = Monster()
     shop = ShopIcon()
     shop_items = []
@@ -48,11 +49,9 @@ def monstar_create():  # создания монстров и всех комп�
     shop_items.append(ShopItem(price=315, dmg=9, id=4))
     shop_items.append(ShopItem(price=150, dmg=4, id=5))
 
-    arm = Arm((-500, 0))
     pygame.mixer.music.load('data/bg_music.mp3')
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.4)
-
 
 
 def endscreen_create():
@@ -133,6 +132,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
         self.player_list_is_off = True
         self.clickDmg = power_panel.power1.damage
         self.dmg_to_monster_baff = power_panel.power1.baff_dmg
+        if arm.item != None:
+            self.weapondmg = arm.item.dmg
+        else:
+            self.weapondmg = 0
 
     def update(self):
         self.dmg_to_monster_baff = power_panel.power1.baff_dmg
@@ -162,10 +165,10 @@ class Monster(pygame.sprite.Sprite):  # класс монстра
             self.rect.x += 5
             self.rect.y += 5
             if random.randint(1, 10) in [1, 2, 3]:
-                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg) * 2)
-                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg) * 2))
+                self.helthPoint -= ((self.clickDmg + self.dmg_to_monster_baff + self.weapondmg) * 2)
+                Crits(mouse.mousepos, ((self.clickDmg + self.dmg_to_monster_baff + self.weapondmg) * 2))
             else:
-                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff + arm.item.dmg)
+                self.helthPoint -= (self.clickDmg + self.dmg_to_monster_baff + self.weapondmg)
             self.monstr_already_move = False  # ждём пока игрок отожмёт лкм, это нужно для того, чтобы
             # игрок не мог просто зажать лкм и наносить беспрерывный урон
         elif event.type == pygame.MOUSEBUTTONUP and self.monstr_already_move == False and self.player_list_is_off:  # отжатие кнопки
@@ -308,7 +311,6 @@ class ShopItem(pygame.sprite.Sprite):  # класс ячейки инвента�
             self.image = pygame.transform.scale(self.image, (164, 154))
 
 
-
 class AddButton(pygame.sprite.Sprite):
 
     def __init__(self, item=None, pos=(0, 0)):
@@ -338,7 +340,6 @@ class AddButton(pygame.sprite.Sprite):
             self.image = self.secondImg
 
 
-
 class Shop(pygame.sprite.Sprite):
     def __init__(self):
         global shop_items
@@ -355,7 +356,6 @@ class Shop(pygame.sprite.Sprite):
         self.shopitem = random.choice(shop_items)
         self.shopitem.rect.x = 735
         self.shopitem.rect.y = 400
-
 
     def update(self):
         global shop_already_open
@@ -378,6 +378,7 @@ class Shop(pygame.sprite.Sprite):
             self.image = load_image('but_close_1.png')
             self.image = pygame.transform.scale(self.image, (140, 35))
 
+
 class InventoryIndex(pygame.sprite.Sprite):  # класс ячейки инвентаря
     def __init__(self, pos, item=None, id=-1):
         super().__init__(button_sprites)
@@ -391,10 +392,12 @@ class InventoryIndex(pygame.sprite.Sprite):  # класс ячейки инве�
     def update(self):
         if inventory_already_open is False and pygame.sprite.collide_mask(self, mouse):
             for i in inventory:
-                if self.item == i.item and pygame.sprite.collide_mask(self, mouse) and mouse.rightClick and self != arm.item:
+                if self.item == i.item and pygame.sprite.collide_mask(self,
+                                                                      mouse) and mouse.rightClick and self != arm.item:
                     self.but = AddButton(self.item, mouse.mousepos)
                     print(mouse.mousepos)
                     mouse.rightClick = False
+
 
 class Arm(pygame.sprite.Sprite):
 
@@ -411,7 +414,7 @@ class Arm(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.collide_mask(self, mouse):
-            print(1)
+            pass
 
     def cut_sheet(self, sheet, columns, rows, frame):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -421,6 +424,7 @@ class Arm(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 frame.append(sheet.subsurface(pygame.Rect(
                     frame_location, self.rect.size)))
+
 
 class PlayerList(pygame.sprite.Sprite):
     def __init__(self, exp, money, count_died_monsters):
@@ -589,7 +593,6 @@ class Endscreen(pygame.sprite.Sprite):
         self.end_menu_rect = self.end_menu.get_rect()
         self.endresult = EndResult(self.lvl, self.money)
 
-
     def update(self):
         pass
 
@@ -608,6 +611,7 @@ class EndResult(pygame.sprite.Sprite):
     def update(self):
         pass
 
+
 class Crits(pygame.sprite.Sprite):
 
     def __init__(self, pos=(10, 10), crit_dmg=0):
@@ -624,6 +628,7 @@ class Crits(pygame.sprite.Sprite):
         self.rect.y += self.velocity[1]
         if self.rect.x < 0:
             self.kill()
+
 
 class EndTextResult(pygame.sprite.Sprite):
     def __init__(self, lvl, money):
@@ -642,6 +647,8 @@ class EndTextResult(pygame.sprite.Sprite):
         screen.blit(self.text1, (350, 230))
         screen.blit(self.text2, (350, 300))
         screen.blit(self.text3, (350, 350))
+
+
 class Mouse(pygame.sprite.Sprite):  # класс Мыши
     menu_imag = load_image("mouse_cursor.png")  # картинка мыши
     menu_imag = pygame.transform.scale(menu_imag, (60, 60))
@@ -664,6 +671,7 @@ class Mouse(pygame.sprite.Sprite):  # класс Мыши
 
     def mouse_right_update(self, click_right):
         self.rightClick = click_right
+
 
 fps = 120  # фпс
 running = True  # программа работает
@@ -693,7 +701,9 @@ while running:  # вечный цикл игры
         if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed(3)[2]:  # нажата клавиша
             # и нажата пкм
             mouse.mouse_right_update(True)
-        if event.type == pygame.MOUSEBUTTONUP and (pygame.mouse.get_pressed(3)[0] == False or pygame.mouse.get_pressed(3)[2] == False):  # проверяем что ОТЖАЛИ
+        if event.type == pygame.MOUSEBUTTONUP and (
+                pygame.mouse.get_pressed(3)[0] == False or pygame.mouse.get_pressed(3)[
+            2] == False):  # проверяем что ОТЖАЛИ
             mouse.click = False  # меняем информацию
             mouse.rightClick = False
         if monster_exist_flag:  # проверяем существует ли монстр
